@@ -1,0 +1,90 @@
+---
+title: "FA7_Dizon_STATS"
+author: "Kiana Marie Dizon"
+output: html_document
+date: "2024-09-27"
+---
+
+## Introduction
+
+#### This analysis aims to compare the means of two groups (those using the invisibility cloak and those not using it) in terms of their "Mischief" scores.
+
+
+```{r 1}
+library(dplyr)
+library(ggplot2)
+
+# Create the dataset
+data <- data.frame(
+  Participant = 1:24,
+  Cloak = c(rep(0, 12), rep(1, 12)),  # 0 = no cloak, 1 = cloak
+  Mischief = c(3, 1, 5, 4, 6, 4, 6, 2, 0, 5, 4, 5,
+               4, 3, 6, 6, 8, 5, 5, 4, 2, 5, 7, 5)
+)
+
+# Display the data
+head(data)
+```
+## Assumptions of the Independent Samples t-test
+#### Assumption 1: Independence of Observations
+#### The participants in each group are independent. There should be no relationship between the individuals in the different groups.
+
+#### Assumption 2: Normality
+#### The distribution of scores in each group should be approximately normally distributed. This can be checked using Shapiro-Wilk test.
+
+```{r 2}
+shapiro_test_no_cloak <- shapiro.test(data$Mischief[data$Cloak == 0])
+shapiro_test_with_cloak <- shapiro.test(data$Mischief[data$Cloak == 1])
+
+shapiro_test_no_cloak
+shapiro_test_with_cloak
+```
+
+#### Assumption 3: Homogeneity of Variance
+#### The variances in each group should be approximately equal. This can be checked using Levene's Test.
+
+
+```{r 3}
+# Install and load car package for Levene's Test
+if (!requireNamespace("car", quietly = TRUE)) {
+    install.packages("car")
+}
+library(car)
+
+# Levene's Test
+levene_test <- leveneTest(Mischief ~ as.factor(Cloak), data = data)
+levene_test
+```
+#### Assumption 4: Scale of Measurement
+#### The dependent variable (Mischief scores) is measured on a continuous scale.
+
+#### Assumption 5: Random Sampling
+#### The sample should be randomly selected from the population.
+
+```{r 4}
+# Independent samples t-test
+t_test_result <- t.test(Mischief ~ Cloak, data = data, var.equal = TRUE)  # Change to var.equal = FALSE if variances are unequal
+t_test_result
+```
+
+
+```{r 5}
+# Extract results
+t_value <- t_test_result$statistic
+p_value <- t_test_result$p.value
+mean_no_cloak <- mean(data$Mischief[data$Cloak == 0])
+mean_with_cloak <- mean(data$Mischief[data$Cloak == 1])
+confidence_interval <- t_test_result$conf.int
+
+# Summarize results
+cat("T-Value:", t_value, "\n")
+cat("P-Value:", p_value, "\n")
+cat("Mean Mischief (No Cloak):", mean_no_cloak, "\n")
+cat("Mean Mischief (With Cloak):", mean_with_cloak, "\n")
+cat("95% Confidence Interval:", confidence_interval, "\n")
+```
+
+## Conclusion
+#### Based on the independent samples t-test, we observed a t-value of r round(t_value, -1.71) with a p-value of r round(p_value, 0.10). The mean mischief score for participants without the cloak was r round(mean_no_cloak, 3.75), while for those with the cloak, it was r round(mean_with_cloak, 5). The 95% confidence interval for the difference in means is r round(confidence_interval[1], -2.76) to r round(confidence_interval[2], 0.26).
+
+#### If the p-value is less than the significance level (typically 0.05), we reject the null hypothesis, concluding that there is a statistically significant difference in the mischief scores between the two groups.
